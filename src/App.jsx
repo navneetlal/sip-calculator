@@ -21,39 +21,55 @@ const SIPCalculator = () => {
 
   const calculateSIPReturns = (data) => {
     const {
-      initialInvestment,
-      monthlySIP,
-      annualStepUp,
-      totalYears,
-      expectedReturn
+      initialInvestment, // Lumpsum amount
+      monthlySIP,        // Monthly SIP amount
+      annualStepUp,      // Yearly percentage increase in SIP
+      totalYears,        // Investment duration in years
+      expectedReturn     // Annual return rate in percentage
     } = data;
-
+  
+    // Calculate monthly interest rate
     const monthlyRate = expectedReturn / 12 / 100;
+    
     let yearlyData = [];
     let currentSIP = monthlySIP;
     let totalInvested = initialInvestment;
     let totalValue = initialInvestment;
-
+    
+    // Iterate through each year
     for (let year = 1; year <= totalYears; year++) {
-      totalValue = (totalValue * (1 + expectedReturn / 100));
-      
+      // For each month in the year
       for (let month = 1; month <= 12; month++) {
-        totalValue += currentSIP;
+        // First compound the existing amount
         totalValue *= (1 + monthlyRate);
+        
+        // Then add the SIP amount
+        totalValue += currentSIP;
         totalInvested += currentSIP;
       }
-
+      
+      // Store yearly data
       yearlyData.push({
         year,
+        sipAmount: Math.round(currentSIP),
         totalInvested: Math.round(totalInvested),
         estimatedReturn: Math.round(totalValue - totalInvested),
-        totalValue: Math.round(totalValue)
+        totalValue: Math.round(totalValue),
+        xirr: calculateXIRR(totalValue, totalInvested, year)
       });
-
+      
+      // Increase SIP amount for next year
       currentSIP *= (1 + annualStepUp / 100);
     }
-
+    
     return yearlyData;
+  };
+  
+  // Helper function to calculate approximate XIRR
+  const calculateXIRR = (finalValue, totalInvested, years) => {
+    // This is a simplified XIRR calculation
+    const r = Math.pow(finalValue / totalInvested, 1 / years) - 1;
+    return Math.round(r * 100 * 100) / 100; // Return percentage with 2 decimal places
   };
 
   const results = useMemo(() => calculateSIPReturns(formData), [formData]);
